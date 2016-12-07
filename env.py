@@ -48,8 +48,8 @@ class Env:
         self.model_parameters_size = None
         self.batch_size = 10
         self.chains_num = 1  # number of models to un in parallel; parameters are for each chain
-        self.n_chunks = 3  # samples are drawn and stored in chunks
-        self.n_samples = 50  # samples per chunk
+        self.n_chunks = 100  # samples are drawn and stored in chunks
+        self.n_samples = 100  # samples per chunk
         self.thinning = 0  # number of samples to discard
 
         self.sampler = None  # sampler created for current split
