@@ -1,5 +1,6 @@
 """
 This module implements Hamiltonian based MCMC samplers for NNs.
+Radford M Neal. “Bayesian Learning for Neural Networks”. In: PhD thesis, University of Toronto. 1995.
 """
 
 import numpy as np
@@ -33,20 +34,20 @@ class HMCSampler(MCMC_sampler):
         :param mh_correction: Whether to perform MH correction step. Default=True
         """
         super().__init__(**kwargs)
-        self.sampler_type = "HMC"
+        self.sampler_type = 'HMC'
         self.hmc_steps = hmc_steps
 
     def __repr__(self):
         s = super().__repr__()
-        s += f"HMC steps: {self.hmc_steps}\n"
-        s += f"MH correction: {self.mh_correction}\n"
-        s += f"Persistent momentum: {self.persistent_momentum}\n"
+        s += f'HMC steps: {self.hmc_steps}\n'
+        s += f'MH correction: {self.mh_correction}\n'
+        s += f'Persistent momentum: {self.persistent_momentum}\n'
         return s
 
     def _create_feeds(self):
         super()._create_feeds()
 
-        """ Adds momentum to the graph. """
+        ''' Adds momentum to the graph. '''
         self._momentum_value = np.zeros(shape=self.position_shape, dtype=np.float32)
         self._momentum = tf.placeholder(tf.float32, shape=self.position_shape)
         self._feed_dict[self._momentum] = lambda: self._momentum_value
@@ -141,6 +142,7 @@ class HMCSampler(MCMC_sampler):
 class SGHMCSampler(HMCSampler):
     """
     Stochastic-Gradient Hamiltonian Monte-Carlo (SG-HMC) sampler for NNs.
+    https://arxiv.org/abs/1402.4102
     """
 
     def __new__(cls, **kwargs):
@@ -164,11 +166,11 @@ class SGHMCSampler(HMCSampler):
         kwargs['seek_step_sizes'] = False
 
         super().__init__(**kwargs)
-        self.sampler_type = "SG-HMC"
+        self.sampler_type = 'SG-HMC'
 
     def __repr__(self):
         s = super().__repr__()
-        s += f"Friction: {self.friction}\n"
+        s += f'Friction: {self.friction}\n'
         return s
 
     def _leapfrog_step(self, position, velocity, velocity_step_multiplier=1.):

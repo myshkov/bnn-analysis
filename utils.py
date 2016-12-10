@@ -12,7 +12,7 @@ DPI = 120
 
 def set_data_dir(dir):
     global DATA_DIR
-    DATA_DIR = BASE_DATA_DIR + "/" + dir
+    DATA_DIR = BASE_DATA_DIR + '/' + dir
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
@@ -46,7 +46,7 @@ def save_pickle(filename, save):
         pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
         f.close()
     except Exception as e:
-        logging.error(f"Unable to save data to {filename}: {e}")
+        logging.error(f'Unable to save data to {filename}: {e}')
         raise
 
 
@@ -79,15 +79,16 @@ def save_fig(file_name, clear=True):
         os.makedirs(FIGURES_DIR)
 
     if file_name is not None:
-        plt.savefig(FIGURES_DIR + '/' + file_name + '.png', dpi=DPI)
+        plt.savefig(FIGURES_DIR + '/' + file_name + '.png')
 
-        if "--timestamp" in file_name:
-            dir = FIGURES_DIR + "/final"
-            if not os.path.exists(dir):
-                os.makedirs(dir)
-
-            file_name = file_name[:file_name.find("--timestamp")]
-            plt.savefig(dir + '/' + file_name + '.png', dpi=DPI)
+        # save for report
+        # if "--timestamp" in file_name:
+        #     dir = FIGURES_DIR + "/final"
+        #     if not os.path.exists(dir):
+        #         os.makedirs(dir)
+        #
+        #     file_name = file_name[:file_name.find("--timestamp")]
+        #     plt.savefig(dir + '/' + file_name + '.png', dpi=DPI)
 
     if clear:
         plt.clf()

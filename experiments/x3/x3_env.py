@@ -27,7 +27,6 @@ class X3Env(Env):
         # setup defaults
         self.env_name = 'x3'
         self.layers_description = [[1, 0.0], [100, 0.0], [1, 0.0]]
-        # self.layers_description = [[1, 0.0], [100, 0.0], [100, 0.0], [1, 0.0]]
         self.batch_size = 20
 
     def true_f(self, x):

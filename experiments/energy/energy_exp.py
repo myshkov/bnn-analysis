@@ -18,8 +18,8 @@ class EnergyExp(Experiment):
         env = EnergyEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "hmc"
-        env.test_case_name = "baseline"
+        env.model_name = 'hmc'
+        env.test_case_name = 'baseline'
 
         env.chains_num = 1
         env.n_samples = 100
@@ -34,14 +34,14 @@ class EnergyExp(Experiment):
         sampler_params['seek_step_sizes'] = False
         sampler_params['fade_in_velocities'] = True
         env.setup_data_dir()
-        self.setup_env_mcmc(env, HMCSampler, sampler_params)
+        self.configure_env_mcmc(env, HMCSampler, sampler_params)
         env.run()
 
     def run_sgld(self):
         env = EnergyEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "sgld"
+        env.model_name = 'sgld'
 
         env.n_samples = 100
         env.thinning = 29
@@ -52,14 +52,14 @@ class EnergyExp(Experiment):
         sampler_params['fade_in_velocities'] = True
 
         env.setup_data_dir()
-        self.setup_env_mcmc(env, SGLDSampler, sampler_params)
+        self.configure_env_mcmc(env, SGLDSampler, sampler_params)
         env.run()
 
     def run_sghmc(self):
         env = EnergyEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "sghmc"
+        env.model_name = 'sghmc'
 
         env.chains_num = 1
         env.n_samples = 100
@@ -73,14 +73,14 @@ class EnergyExp(Experiment):
         sampler_params['fade_in_velocities'] = True
 
         env.setup_data_dir()
-        self.setup_env_mcmc(env, SGHMCSampler, sampler_params)
+        self.configure_env_mcmc(env, SGHMCSampler, sampler_params)
         env.run()
 
     def run_psgld(self):
         env = EnergyEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "psgld"
+        env.model_name = 'psgld'
 
         env.n_samples = 100
         env.thinning = 19
@@ -93,14 +93,14 @@ class EnergyExp(Experiment):
         sampler_params['fade_in_velocities'] = True
 
         env.setup_data_dir()
-        self.setup_env_mcmc(env, pSGLDSampler, sampler_params)
+        self.configure_env_mcmc(env, pSGLDSampler, sampler_params)
         env.run()
 
     def run_dropout(self):
         env = EnergyEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "dropout"
+        env.model_name = 'dropout'
 
         env.n_samples = 100
 
@@ -111,31 +111,30 @@ class EnergyExp(Experiment):
         tau = 0.427
 
         env.setup_data_dir()
-        self.setup_env_dropout(env, sampler_params=sampler_params, dropout=dropout, tau=tau)
+        self.configure_env_dropout(env, sampler_params=sampler_params, dropout=dropout, tau=tau)
         env.run()
 
     def run_bbb(self):
         env = EnergyEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "bbb"
-        n_epochs = 5000
-        noise_variance = 0.01
+        env.model_name = 'bbb'
+        n_epochs = 15
 
         env.setup_data_dir()
-        self.setup_env_bbb(env, noise_variance=noise_variance, n_epochs=n_epochs)
+        self.configure_env_bbb(env, n_epochs=n_epochs)
         env.run()
 
     def run_pbp(self):
         env = EnergyEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "pbp"
+        env.model_name = 'pbp'
         env.n_samples = 100
         env.n_chunks = 20
 
         env.setup_data_dir()
-        self.setup_env_pbp(env, n_epochs=5)
+        self.configure_env_pbp(env, n_epochs=5)
         env.run()
 
 
@@ -143,27 +142,27 @@ def main():
     experiment = EnergyExp()
 
     queue = OrderedDict()
-    queue["HMC"] = experiment.run_baseline_hmc
-    queue["SGLD"] = experiment.run_sgld
-    queue["SGHMC"] = experiment.run_sghmc
-    queue["pSGLD"] = experiment.run_psgld
-    queue["BBB"] = experiment.run_bbb
+    queue['HMC'] = experiment.run_baseline_hmc
+    queue['SGLD'] = experiment.run_sgld
+    queue['SGHMC'] = experiment.run_sghmc
+    queue['pSGLD'] = experiment.run_psgld
+    queue['BBB'] = experiment.run_bbb
     # queue["PBP"] = experiment.run_pbp
-    queue["Dropout"] = experiment.run_dropout
+    queue['Dropout'] = experiment.run_dropout
 
     experiment.run_queue(queue, cpu=True)
     experiment.report_metrics_table(queue)
 
-    del queue["HMC"]
+    del queue['HMC']
 
     max_time = 15
-    experiment.plot_multiple_metrics("HMC", queue.keys(), ["KS"], max_time=max_time, title_name="KS distance")
-    experiment.plot_multiple_metrics("HMC", queue.keys(), ["Precision"], max_time=max_time, title_name="Precision")
-    experiment.plot_multiple_metrics("HMC", queue.keys(), ["Recall"], max_time=max_time, title_name="Recall")
+    experiment.plot_multiple_metrics('HMC', queue.keys(), ['KS'], max_time=max_time, title_name='KS distance')
+    experiment.plot_multiple_metrics('HMC', queue.keys(), ['Precision'], max_time=max_time, title_name='Precision')
+    experiment.plot_multiple_metrics('HMC', queue.keys(), ['Recall'], max_time=max_time, title_name='Recall')
     # experiment.plot_multiple_metrics("HMC", queue.keys(), ["KL"])
     # experiment.plot_multiple_metrics("HMC", queue.keys(), ["F1"], max_time=max_time, title_name="F1 score")
     # experiment.plot_multiple_metrics("HMC", queue.keys(), ["IoU"], max_time=max_time)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

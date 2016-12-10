@@ -1,10 +1,14 @@
-""" Probabilistic BackPropagation. Uses Theano implementation of PBP_net in
+""" PBP Sampler:
+Probabilistic Backpropagation for Scalable Learning of Bayesian Neural Networks
+https://arxiv.org/abs/1502.05336
+
+Uses implementation by the authors:
 https://github.com/HIPS/Probabilistic-Backpropagation
 """
 import numpy as np
 
 from sampler import Sampler, SampleStats
-# from models.PBP_net import PBP_net
+# from models.PBP_net import PBP_net  # put PBP_net in this directory and uncomment to use the sampler
 
 
 class PBPSampler(Sampler):
@@ -17,7 +21,7 @@ class PBPSampler(Sampler):
         Creates a new PBPSampler object.
         """
         super().__init__(**kwargs)
-        self.sampler_type = "PBP"
+        self.sampler_type = 'PBP'
 
         self.models_desc = model_desc
         self._n_epochs = n_epochs
@@ -33,7 +37,7 @@ class PBPSampler(Sampler):
         return s
 
     def _fit(self, **kwargs):
-        """ Fits the model prior to sampling. """
+        """ Fits the model before sampling. """
         if self._model is None:
             shapes = list(list(zip(*self.models_desc))[0])
             shapes = shapes[1:-1]

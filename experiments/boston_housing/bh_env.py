@@ -15,4 +15,4 @@ class BostonHousingEnv(Env):
         self.env_name = 'bh'
         self.layers_description = [[13, 0.0], [50, 0.0], [1, 0.0]]
         self.n_splits = 4
-        self.batch_size = 32
+        self.batch_size = 20

@@ -1,5 +1,5 @@
 """
-Tests MCMC samplers on a multivariate Gaussian
+This module contains tests for MCMC samplers on a correlated multivariate Gaussian.
 """
 import logging
 from collections import OrderedDict
@@ -20,8 +20,8 @@ np.random.seed(seed)
 tf.set_random_seed(seed)
 
 # configure seaborn
-sns.set_style("whitegrid")
-sns.set_context("notebook", font_scale=1.5)
+sns.set_style('whitegrid')
+sns.set_context('notebook', font_scale=1.5)
 common_palette = [(.05, .1, .9, .5), (.05, .7, .7, .7), 'm', 'gray']
 current_palette = sns.color_palette()
 
@@ -66,13 +66,13 @@ def run_samplers(plot_samples=False, plot_errors=True):
         tf.initialize_all_variables().run()
 
         for name, sampler in samplers.items():
-            logging.info("Sampling {}...".format(name))
+            logging.info('Sampling {}...'.format(name))
             collected_samples = list()
             for idx in range(samples_num):
                 sample, stats = sampler.sample_posterior(session=session, return_stats=True)
                 collected_samples.append(sample[0])
                 if idx % 500 == 0:
-                    logging.info(f"Collected = {idx}, rate = {stats[0].rate:.2f}, step = {stats[0].step:.8f}")
+                    logging.info(f'Collected = {idx}, rate = {stats[0].rate:.2f}, step = {stats[0].step:.8f}')
 
             samples[name] = np.asarray(collected_samples)
 
@@ -87,8 +87,8 @@ def run_samplers(plot_samples=False, plot_errors=True):
         plot_dict = OrderedDict()
 
         for sampler in samplers.keys():
-            plot_dict[sampler + "-x"] = samples[sampler][:show_num, 0]
-            plot_dict[sampler + "-y"] = samples[sampler][:show_num, 1]
+            plot_dict[sampler + '-x'] = samples[sampler][:show_num, 0]
+            plot_dict[sampler + '-y'] = samples[sampler][:show_num, 1]
 
         df = pd.DataFrame.from_dict(plot_dict).reset_index()
 
@@ -96,7 +96,7 @@ def run_samplers(plot_samples=False, plot_errors=True):
 
         legend = []
         for idx, sampler in enumerate(samplers.keys()):
-            g.map(plt.scatter, sampler + "-x", sampler + "-y", color=current_palette[idx])
+            g.map(plt.scatter, sampler + '-x', sampler + '-y', color=current_palette[idx])
             legend.append(sampler)
 
         plt.legend(legend)
@@ -106,8 +106,8 @@ def run_samplers(plot_samples=False, plot_errors=True):
         lambda_ = np.sqrt(lambda_)
 
         ax = g.ax
-        ax.set_title("Correlated Gaussian: HMC samplers")
-        ax.set(xlabel="X", ylabel="Y")
+        ax.set_title('Correlated Gaussian: HMC samplers')
+        ax.set(xlabel='X', ylabel='Y')
         ax.set_xlim(-2, 4)
         ax.set_ylim(-2, 4)
 
@@ -128,7 +128,7 @@ def run_samplers(plot_samples=False, plot_errors=True):
         c = 0
         legend = list()
         for name, collected_samples in samples.items():
-            logging.info("Plotting {}...".format(name))
+            logging.info('Plotting {}...'.format(name))
             errors = []
             for run in range(points):
                 # current window of samples
@@ -159,5 +159,5 @@ def main():
         run_samplers()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

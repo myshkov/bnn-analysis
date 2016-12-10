@@ -7,8 +7,8 @@ import seaborn as sns
 import evaluation.metrics as metrics
 import utils
 
-sns.set_style("whitegrid")
-sns.set_context("notebook", font_scale=1.5)
+sns.set_style('whitegrid')
+sns.set_context('notebook', font_scale=1.5)
 common_palette = [(.05, .1, .9, .5), (.05, .7, .7, .7), 'm', 'gray']
 current_palette = list(sns.color_palette())
 current_palette.extend(list(sns.color_palette('pastel')))
@@ -45,12 +45,12 @@ def plot_predictive_baseline(env, samples, stddev_mult=3., title_name=None):
     g.map(plt.scatter, 'train_x', 'train_y', color='g', s=20)
 
     ax = g.ax
-    ax.set_title("Posterior Predictive Distribution" + (": " + title_name) if title_name is not None else "")
-    ax.set(xlabel="X", ylabel="Y")
+    ax.set_title('Posterior Predictive Distribution' + (': ' + title_name) if title_name is not None else '')
+    ax.set(xlabel='X', ylabel='Y')
     ax.set_xlim(env.view_xrange[0], env.view_xrange[1])
     ax.set_ylim(env.view_yrange[0], env.view_yrange[1])
 
-    legend = ["Prediction mean", "True f(x)", "Training data", "StdDev"]
+    legend = ['Prediction mean', 'True f(x)', 'Training data', 'StdDev']
     plt.legend(legend)
 
     # ax.annotate("MSE: {:.03f}".format(0), xy=(0.1, 0.9), xytext=(0.1, 0.9), xycoords='figure fraction',
@@ -58,7 +58,7 @@ def plot_predictive_baseline(env, samples, stddev_mult=3., title_name=None):
 
     name = utils.DATA_DIR.replace('/', '-')
     plt.tight_layout(pad=0.6)
-    utils.save_fig("predictive-distribution-" + name)
+    utils.save_fig('predictive-distribution-' + name)
 
 
 def plot_predictive_comparison(env, baseline_samples, target_samples, stddev_mult=3., target_metrics=None,
@@ -94,24 +94,24 @@ def plot_predictive_comparison(env, baseline_samples, target_samples, stddev_mul
     g.map(plt.scatter, 'train_x', 'train_y', color='g', s=20)
 
     ax = g.ax
-    ax.set_title("Posterior Predictive Distribution" + (": " + title_name) if title_name is not None else "")
-    ax.set(xlabel="X", ylabel="Y")
+    ax.set_title('Posterior Predictive Distribution' + (': ' + title_name) if title_name is not None else '')
+    ax.set(xlabel='X', ylabel='Y')
     ax.set_xlim(env.view_xrange[0], env.view_xrange[1])
     ax.set_ylim(env.view_yrange[0], env.view_yrange[1])
 
-    legend = ["Prediction mean", "True f(x)", "Training data", "True StdDev", "Predicted StdDev"]
+    legend = ['Prediction mean', 'True f(x)', 'Training data', 'True StdDev', 'Predicted StdDev']
     plt.legend(legend)
 
     if target_metrics is not None:
         offset = 0
         for tm, tv in target_metrics.items():
-            ax.annotate(f"{tm}: {tv:.02f}", xy=(0.08, 0.92 - offset), xytext=(0.08, 0.92 - offset),
+            ax.annotate(f'{tm}: {tv:.02f}', xy=(0.08, 0.92 - offset), xytext=(0.08, 0.92 - offset),
                         xycoords='figure fraction', textcoords='figure fraction')
             offset += 0.04
 
     name = utils.DATA_DIR.replace('/', '-')
     plt.tight_layout(pad=0.6)
-    utils.save_fig("predictive-distribution-" + name)
+    utils.save_fig('predictive-distribution-' + name)
 
 
 def plot_metrics(baseline_samples, samples_dict, times_dict, metric_names, resample_base=150,
@@ -122,7 +122,7 @@ def plot_metrics(baseline_samples, samples_dict, times_dict, metric_names, resam
     plot_dict = dict()
 
     for name, samples in samples_dict.items():
-        logging.info(f"Testing: {name}")
+        logging.info(f'Testing: {name}')
         times = times_dict[name]
 
         if max_time is not None:
@@ -133,7 +133,7 @@ def plot_metrics(baseline_samples, samples_dict, times_dict, metric_names, resam
                 samples = samples[:ind_max]
 
         if samples.shape[0] == 0:
-            logging.info(f"No samples for {name}.")
+            logging.info(f'No samples for {name}.')
             continue
 
         run_metrics = None
@@ -174,20 +174,20 @@ def plot_metrics(baseline_samples, samples_dict, times_dict, metric_names, resam
             if (name, i, 'time') in plot_dict:
                 g.map(plt.plot, (name, i, 'time'), (name, i, 'value'), lw=4, color=current_palette[len(legend)])
                 if len(metric_names) > 1:
-                    legend.append(name + ": " + metric_names[i])
+                    legend.append(name + ': ' + metric_names[i])
                 else:
                     legend.append(name)
 
     g.ax.set_ylim(0, 1.05)
 
-    plt.xlabel("Time (minutes)")
-    plt.ylabel("Metric Value")
-    plt.title(title_name if title_name is not None else "Metrics")
+    plt.xlabel('Time (minutes)')
+    plt.ylabel('Metric Value')
+    plt.title(title_name if title_name is not None else 'Metrics')
     plt.legend(legend)
 
-    file_name = "metrics"
-    file_name += "--" + "-".join((k.lower() for k in samples_dict.keys()))
-    file_name += "--" + "-".join((k.lower() for k in metric_names))
+    file_name = 'metrics'
+    file_name += '--' + '-'.join((k.lower() for k in samples_dict.keys()))
+    file_name += '--' + '-'.join((k.lower() for k in metric_names))
     plt.tight_layout(pad=0.6)
     utils.save_fig(file_name)
 
@@ -205,7 +205,7 @@ def plot_hist(baseline_samples, target_samples, true_x, true_y):
     y0, y1 = ax.get_ylim()
 
     plt.plot([true_y, true_y], [0, y1 - (y1 - y0) * 0.01], linewidth=1, color='r')
-    plt.title("Predictive" + (f" at {true_x:.2f}" if true_x is not None else ""))
+    plt.title('Predictive' + (f' at {true_x:.2f}' if true_x is not None else ''))
 
     fig = plt.gcf()
     fig.set_size_inches(9, 9)
@@ -213,4 +213,4 @@ def plot_hist(baseline_samples, target_samples, true_x, true_y):
 
     name = utils.DATA_DIR.replace('/', '-')
     # plt.tight_layout(pad=0.6)
-    utils.save_fig("predictive-at-point-" + name)
+    utils.save_fig('predictive-at-point-' + name)

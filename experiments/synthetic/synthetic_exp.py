@@ -16,9 +16,6 @@ class SyntheticExp(Experiment):
     def __init__(self):
         super().__init__()
 
-    def _setup_env_defaults(self, env):
-        pass
-
     def _setup_sampler_defaults(self, sampler_params):
         sampler_params['noise_precision'] = 25.
         sampler_params['weights_precision'] = 1.
@@ -27,10 +24,10 @@ class SyntheticExp(Experiment):
         env = SyntheticEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "hmc"
-        env.test_case_name = "baseline"
+        env.model_name = 'hmc'
+        env.test_case_name = 'baseline'
 
-        env.chains_num = 6
+        env.chains_num = 1
         env.n_samples = 50
         env.thinning = 1
 
@@ -42,14 +39,14 @@ class SyntheticExp(Experiment):
         sampler_params['batch_size'] = None
         sampler_params['seek_step_sizes'] = True
         env.setup_data_dir()
-        self.setup_env_mcmc(env, HMCSampler, sampler_params)
+        self.configure_env_mcmc(env, HMCSampler, sampler_params)
         env.run()
 
     def run_sgld(self):
         env = SyntheticEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "sgld"
+        env.model_name = 'sgld'
 
         env.n_samples = 100
         env.thinning = 99
@@ -59,14 +56,14 @@ class SyntheticExp(Experiment):
         sampler_params['anneal_step_sizes'] = True
 
         env.setup_data_dir()
-        self.setup_env_mcmc(env, SGLDSampler, sampler_params)
+        self.configure_env_mcmc(env, SGLDSampler, sampler_params)
         env.run()
 
     def run_psgld(self):
         env = SyntheticEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "psgld"
+        env.model_name = 'psgld'
 
         env.chains_num = 3
         env.n_samples = 100
@@ -80,14 +77,14 @@ class SyntheticExp(Experiment):
         sampler_params['noise_precision'] = 10.
 
         env.setup_data_dir()
-        self.setup_env_mcmc(env, pSGLDSampler, sampler_params)
+        self.configure_env_mcmc(env, pSGLDSampler, sampler_params)
         env.run()
 
     def run_sghmc(self):
         env = SyntheticEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "sghmc"
+        env.model_name = 'sghmc'
 
         env.n_samples = 100
         env.thinning = 9
@@ -99,14 +96,14 @@ class SyntheticExp(Experiment):
         sampler_params['friction'] = 1.
 
         env.setup_data_dir()
-        self.setup_env_mcmc(env, SGHMCSampler, sampler_params)
+        self.configure_env_mcmc(env, SGHMCSampler, sampler_params)
         env.run()
 
     def run_dropout(self):
         env = SyntheticEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "dropout"
+        env.model_name = 'dropout'
 
         env.n_samples = 100
 
@@ -117,26 +114,26 @@ class SyntheticExp(Experiment):
         tau = 0.15
 
         env.setup_data_dir()
-        self.setup_env_dropout(env, sampler_params=sampler_params, dropout=dropout, tau=tau)
+        self.configure_env_dropout(env, sampler_params=sampler_params, dropout=dropout, tau=tau)
         env.run()
 
     def run_bbb(self):
         env = SyntheticEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "bbb"
-        n_epochs = 5000
-        noise_variance = 0.01
+        env.model_name = 'bbb'
+        n_epochs = 50
+        env.n_samples = 20
 
         env.setup_data_dir()
-        self.setup_env_bbb(env, noise_variance=noise_variance, n_epochs=n_epochs)
+        self.configure_env_bbb(env, n_epochs=n_epochs)
         env.run()
 
     def run_pbp(self):
         env = SyntheticEnv()
         self.setup_env_defaults(env)
 
-        env.model_name = "pbp"
+        env.model_name = 'pbp'
 
         env.n_samples = 100
 
@@ -144,7 +141,7 @@ class SyntheticExp(Experiment):
         sampler_params['normalise_data'] = True
 
         env.setup_data_dir()
-        self.setup_env_pbp(env, sampler_params=sampler_params, n_epochs=20)
+        self.configure_env_pbp(env, sampler_params=sampler_params, n_epochs=20)
         env.run()
 
 
@@ -153,36 +150,36 @@ def main():
 
     queue = OrderedDict()
 
-    queue["HMC"] = experiment.run_baseline_hmc
-    queue["SGLD"] = experiment.run_sgld
-    queue["pSGLD"] = experiment.run_psgld
-    queue["SGHMC"] = experiment.run_sghmc
-    queue["BBB"] = experiment.run_bbb
+    queue['HMC'] = experiment.run_baseline_hmc
+    queue['SGLD'] = experiment.run_sgld
+    queue['pSGLD'] = experiment.run_psgld
+    queue['SGHMC'] = experiment.run_sghmc
+    queue['BBB'] = experiment.run_bbb
     # queue["PBP"] = experiment.run_pbp
-    queue["Dropout"] = experiment.run_dropout
+    queue['Dropout'] = experiment.run_dropout
 
     experiment.run_queue(queue, cpu=False)
 
-    del queue["HMC"]
+    del queue['HMC']
 
     for target in queue.keys():
-        target_metrics = experiment.compute_metrics("HMC", target, discard_left=.45, discard_right=.0,
-                                                    metric_names=["RMSE", "KS", "KL", "Precision", "Recall", "F1"])
+        target_metrics = experiment.compute_metrics('HMC', target, discard_left=.45, discard_right=.0,
+                                                    metric_names=['RMSE', 'KS', 'KL', 'Precision', 'Recall', 'F1'])
 
-        print(experiment._report_metrics(target, target_metrics))
+        print(experiment.__report_metrics(target, target_metrics))
 
-        experiment.plot_predictive_comparison("HMC", target, target_metrics=target_metrics, discard_left=.45,
+        experiment.plot_predictive_comparison('HMC', target, target_metrics=target_metrics, discard_left=.45,
                                               discard_right=.0)
 
     max_time = 60
-    experiment.plot_multiple_metrics("HMC", queue.keys(), ["Precision"], max_time=max_time, title_name="Precision")
-    experiment.plot_multiple_metrics("HMC", queue.keys(), ["Recall"], max_time=max_time, title_name="Recall")
-    experiment.plot_multiple_metrics("HMC", queue.keys(), ["KS"], max_time=max_time, title_name="KS distance")
+    experiment.plot_multiple_metrics('HMC', queue.keys(), ['Precision'], max_time=max_time, title_name='Precision')
+    experiment.plot_multiple_metrics('HMC', queue.keys(), ['Recall'], max_time=max_time, title_name='Recall')
+    experiment.plot_multiple_metrics('HMC', queue.keys(), ['KS'], max_time=max_time, title_name='KS distance')
 
     # experiment.plot_multiple_metrics("HMC", queue.keys(), ["KL"], max_time=max_time, title_name="KL divergence")
     # experiment.plot_multiple_metrics("HMC", queue.keys(), ["F1"], max_time=max_time, title_name="F1 score")
     # experiment.plot_multiple_metrics("HMC", queue.keys(), ["IoU"], max_time=max_time)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

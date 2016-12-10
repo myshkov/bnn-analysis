@@ -1,3 +1,4 @@
+""" This module defines the Env class that describes a data setup for experiments and runs the sampling. """
 import logging
 from time import perf_counter as pc
 from datetime import datetime
@@ -8,7 +9,7 @@ import evaluation.metrics as metrics
 import utils
 
 # add console logger
-logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s] %(message)s", datefmt="%H:%M:%S")
+logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
 
 
 class Env:
@@ -27,7 +28,7 @@ class Env:
         # test case
         self.env_name = None  # name of the environment
         self.model_name = None  # name of the model
-        self.test_case_name = "test"  # name of the test
+        self.test_case_name = 'test'  # name of the test
         self.baseline_test_case_name = None  # name of the test containing 'true' posterior
         self.data_dir = None
 
@@ -59,7 +60,7 @@ class Env:
         self._log_handler = None
 
     def get_default_sampler_params(self):
-        """ Returns default parameters for a Sampler. """
+        """ Creates default parameters for a Sampler. """
         params = dict()
         params['train_x'] = self.get_train_x()
         params['train_y'] = self.get_train_y()
@@ -70,29 +71,36 @@ class Env:
         return params
 
     def create_training_test_sets(self):
-        """ For single var regressions only. """
+        """ Split data set into training and test folds. """
         # load input data
-        input_data = np.asarray(np.loadtxt("input/data.txt"), dtype=np.float32)
+        input_data = np.asarray(np.loadtxt('input/data.txt'), dtype=np.float32)
         self.input_dim = input_data.shape[1] - 1
         self.output_dim = 1
 
+        # align to batch size
+        batches = input_data.shape[0] // (self.batch_size * self.n_splits)
+        input_data = input_data[:batches * (self.batch_size * self.n_splits)]
+
         self.data_size = input_data.shape[0]
-        print(f"Loaded input data, shape = {input_data.shape}")
+        print(f'Loaded input data, shape = {input_data.shape}')
 
         # create splits
         kfold = KFold(n_splits=self.n_splits, shuffle=True, random_state=self.seed)
-        print(f"Splits: {self.n_splits}")
+        print(f'Splits: {self.n_splits}')
 
+        # assume y is in the last column by default
         for idx_train, idx_test in kfold.split(input_data):
             self.train_x.append(input_data[idx_train, :-1])
             self.train_y.append(input_data[idx_train, -1:])
             self.test_x.append(input_data[idx_test, :-1])
             self.test_y.append(input_data[idx_test, -1:])
 
+        # layers described as [number of neurons, dropout probability]
         if self.layers_description is None:
             self.layers_description = [[self.input_dim, 0.0], [100, 0.0], [100, 0.0], [self.output_dim, 0.0]]
 
     def samples_per_chunk(self):
+        """ Returns the number of samples drawn in each chunk. """
         return self.n_samples * (self.thinning + 1)
 
     def get_train_x(self):
@@ -105,7 +113,6 @@ class Env:
 
     def get_test_x(self):
         """ Returns current test set - x points. """
-        # return self.train_x[self.current_split]
         return self.test_x[self.current_split]
 
     def get_test_y(self):
@@ -114,14 +121,14 @@ class Env:
 
     def setup_data_dir(self, serialise_name='env'):
         """ Creates data directories and serialises the environment. """
-        self.data_dir = self._create_test_dir_name()
+        self.data_dir = self.__create_test_dir_name()
         utils.set_data_dir(self.data_dir)
 
         if serialise_name is not None:
             utils.serialize(serialise_name, self)
 
         # configure file logging
-        self._log_handler = logging.FileHandler(filename=utils.DATA_DIR + "/env.log", mode='w')
+        self._log_handler = logging.FileHandler(filename=utils.DATA_DIR + '/env.log', mode='w')
         self._log_handler.setLevel(logging.DEBUG)
         logging.getLogger().addHandler(self._log_handler)
 
@@ -130,22 +137,90 @@ class Env:
 
         for split in range(self.n_splits):
             self.current_split = split
-            self._run_split(store_data)
-            # break  # TODO: one split only for now
+            self.__run_split(store_data)
 
-    def _run_split(self, store_data):
-        """ Creates sampler for the current split and draws the samples. """
-        logging.info(f"Split: {self.current_split + 1} / {self.n_splits}")
+    def load_samples(self, split=0, discard_left=0., discard_right=0.):
+        """ Loads collected samples from a file. """
+        samples, split_dir = self.__deserialise_from_split('samples', split)
 
-        utils.set_data_dir(self.data_dir + "/split-" + str(self.current_split))
-        logging.info(f"Data directory: {utils.DATA_DIR}")
+        if discard_right > 0:
+            samples = samples[int(discard_left * samples.shape[0]):-int(discard_right * samples.shape[0])]
+        else:
+            samples = samples[int(discard_left * samples.shape[0]):]
+
+        return samples
+
+    def load_stats(self, split=0, discard_left=0., discard_right=0., key=None):
+        """ Loads collected statistics from a file. """
+        stats, split_dir = self.__deserialise_from_split('stats', split)
+
+        if discard_right > 0:
+            stats = stats[int(discard_left * len(stats)):-int(discard_right * len(stats))]
+        else:
+            stats = stats[int(discard_left * len(stats)):]
+
+        if key is not None:
+            stats = np.asarray(list(map(key, stats)))
+
+        return stats
+
+    def load_times(self, split=0, discard_left=0., discard_right=0.):
+        """ Loads sampling times from a file. """
+        return self.load_stats(split=split, discard_left=discard_left, discard_right=discard_right,
+                               key=lambda stat: stat.time)
+
+    def compute_rmse(self, samples, test_y=None):
+        """ Computer RMSE on the test set. """
+        samples = samples.squeeze()
+        test_y = test_y if test_y is not None else self.get_test_y()
+        test_y = test_y.squeeze()
+
+        mean_prediction = samples.mean(axis=0)
+        rmse = (np.mean((test_y - mean_prediction) ** 2)) ** .5
+
+        return rmse
+
+    def compute_metrics(self, baseline_samples, target_samples, discard_target=0.,
+                        resample_baseline=1000, resample_target=1000, metric_names=None):
+        """ Computes distribution metrics with respect to the baseline. """
+        baseline_samples = metrics.resample_to(baseline_samples, resample_baseline)
+
+        target_samples = target_samples[int(discard_target * target_samples.shape[0]):]
+        target_samples = metrics.resample_to(target_samples, resample_target)
+
+        test_y = self.get_test_y()
+
+        results = dict()
+        if metric_names is None:
+            metric_names = ['KS', 'KL', 'Precision', 'Recall']
+
+        if 'RMSE' in metric_names:
+            results['RMSE'] = self.compute_rmse(target_samples, test_y=test_y)
+            metric_names.remove('RMSE')
+
+        for metric_name in metric_names:
+            metric_fn = metrics.METRICS_INDEX[metric_name]
+            values = list()
+            for test_point in range(baseline_samples.shape[1]):
+                values.append(metric_fn(baseline_samples[:, test_point], target_samples[:, test_point]))
+
+            results[metric_name] = np.mean(values)
+
+        return results
+
+    def __run_split(self, store_data):
+        """ Creates the sampler for the current split and draws the samples. """
+        logging.info(f'Split: {self.current_split + 1} / {self.n_splits}')
+
+        utils.set_data_dir(self.data_dir + '/split-' + str(self.current_split))
+        logging.info(f'Data directory: {utils.DATA_DIR}')
 
         self.sampler = self.sampler_factory()
 
-        with open(utils.DATA_DIR + "/sampler.txt", "w") as f:
+        with open(utils.DATA_DIR + '/sampler.txt', 'w') as f:
             f.write(self.sampler.__repr__())
 
-        logging.info("Total samples to draw: {}, samples per chain: {}, total samples to store: {}"
+        logging.info('Total samples to draw: {}, samples per chain: {}, total samples to store: {}'
                      .format(self.samples_per_chunk() * self.chains_num * self.n_chunks,
                              self.samples_per_chunk() * self.n_chunks,
                              self.n_samples * self.chains_num * self.n_chunks))
@@ -205,11 +280,11 @@ class Env:
                 samples = collected_samples[-lag:]
                 test_rmse = self.compute_rmse(np.asarray(samples))
 
-                logging.info(f"Chunk = {chunk + 1}/{self.n_chunks}, elapsed = {elapsed:.1f}s, " +
-                             f"remain = {remaining[0]:02.0f}:{remaining[1]:02.0f}, test RMSE: {test_rmse:.2f}, " +
-                             f"rate = {min_rate:.2f}-{max_rate:.2f}, loss = {min_loss:.2f}-{max_loss:.2f}, " +
-                             f"norm = {min_norm:.2f}-{max_norm:.2f}, step = {min_step:.12f}-{max_step:.12f}, " +
-                             f"noise var = {min_noise:.2f}-{max_noise:.2f}")
+                logging.info(f'Chunk = {chunk + 1}/{self.n_chunks}, elapsed = {elapsed:.1f}s, ' +
+                             f'remain = {remaining[0]:02.0f}:{remaining[1]:02.0f}, test RMSE: {test_rmse:.2f}, ' +
+                             f'rate = {min_rate:.2f}-{max_rate:.2f}, loss = {min_loss:.2f}-{max_loss:.2f}, ' +
+                             f'norm = {min_norm:.2f}-{max_norm:.2f}, step = {min_step:.12f}-{max_step:.12f}, ' +
+                             f'noise var = {min_noise:.2f}-{max_noise:.2f}')
 
                 # store collected data
                 if store_data and (((chunk + 1) % 10 == 0) or ((chunk + 1) == self.n_chunks)):
@@ -217,95 +292,31 @@ class Env:
                     utils.serialize('samples', np.asarray(collected_samples))
                     utils.serialize('stats', collected_stats)
 
-                    logging.info("---> Collections serialized in {:.0f} seconds.".format(pc() - start))
+                    logging.info('---> Collections serialized in {:.0f} seconds.'.format(pc() - start))
 
-        logging.info("Sampling complete")
+        logging.info('Sampling complete')
         logging.getLogger().removeHandler(self._log_handler)
 
-    def _deserialise_from_split(self, name, split):
+    def __deserialise_from_split(self, name, split):
         data_dir = utils.DATA_DIR
-        split_dir = utils.DATA_DIR + "/split-" + str(split)
+        split_dir = utils.DATA_DIR + '/split-' + str(split)
         utils.DATA_DIR = split_dir
         data = utils.deserialize(name)
         utils.DATA_DIR = data_dir
         return data, split_dir
 
-    def load_samples(self, split=0, discard_left=0., discard_right=0.):
-        samples, split_dir = self._deserialise_from_split('samples', split)
-
-        if discard_right > 0:
-            samples = samples[int(discard_left * samples.shape[0]):-int(discard_right * samples.shape[0])]
-        else:
-            samples = samples[int(discard_left * samples.shape[0]):]
-
-        return samples
-
-    def load_stats(self, split=0, discard_left=0., discard_right=0., key=None):
-        stats, split_dir = self._deserialise_from_split('stats', split)
-
-        if discard_right > 0:
-            stats = stats[int(discard_left * len(stats)):-int(discard_right * len(stats))]
-        else:
-            stats = stats[int(discard_left * len(stats)):]
-
-        if key is not None:
-            stats = np.asarray(list(map(key, stats)))
-
-        return stats
-
-    def load_times(self, split=0, discard_left=0., discard_right=0.):
-        return self.load_stats(split=split, discard_left=discard_left, discard_right=discard_right,
-                               key=lambda stat: stat.time)
-
-    def compute_rmse(self, samples, test_y=None):
-        samples = samples.squeeze()
-        test_y = test_y if test_y is not None else self.get_test_y()
-        test_y = test_y.squeeze()
-
-        mean_prediction = samples.mean(axis=0)
-        rmse = (np.mean((test_y - mean_prediction) ** 2)) ** .5
-
-        return rmse
-
-    def compute_metrics(self, baseline_samples, target_samples, discard_target=0.,
-                        resample_baseline=1000, resample_target=1000, metric_names=None):
-        baseline_samples = metrics.resample_to(baseline_samples, resample_baseline)
-
-        target_samples = target_samples[int(discard_target * target_samples.shape[0]):]
-        target_samples = metrics.resample_to(target_samples, resample_target)
-
-        test_y = self.get_test_y()
-
-        results = dict()
-        if metric_names is None:
-            metric_names = ["KS", "KL", "Precision", "Recall"]
-
-        if "RMSE" in metric_names:
-            results["RMSE"] = self.compute_rmse(target_samples, test_y=test_y)
-            metric_names.remove("RMSE")
-
-        for metric_name in metric_names:
-            metric_fn = metrics.METRICS_INDEX[metric_name]
-            values = list()
-            for test_point in range(baseline_samples.shape[1]):
-                values.append(metric_fn(baseline_samples[:, test_point], target_samples[:, test_point]))
-
-            results[metric_name] = np.mean(values)
-
-        return results
-
-    def _create_test_dir_name(self):
-        timestamp = "{0:%Y-%m-%d-%H-%M-%S}".format(datetime.now())
+    def __create_test_dir_name(self):
+        timestamp = '{0:%Y-%m-%d-%H-%M-%S}'.format(datetime.now())
         sample_num = self.n_samples * (self.thinning + 1) * self.chains_num * self.n_chunks
 
-        name = ""
+        name = ''
         name += self.env_name
-        name += "-" + self.model_name
-        name += "-" + self.test_case_name
+        name += '-' + self.model_name
+        name += '-' + self.test_case_name
 
-        name += "--chains-" + str(self.chains_num)
-        name += "--samples-" + str(sample_num)
+        name += '--chains-' + str(self.chains_num)
+        name += '--samples-' + str(sample_num)
 
-        name += "--timestamp-" + timestamp
+        name += '--timestamp-' + timestamp
 
         return name

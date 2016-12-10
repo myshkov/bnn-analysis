@@ -1,5 +1,5 @@
 """
-This module implements base functionality for MCMC-based samplers for NNs.
+This module implements the base functionality for MCMC-based samplers for NNs.
 """
 import logging
 import numpy as np
@@ -37,14 +37,11 @@ class MCMC_sampler(Sampler):
 
         :param loss_fn: Target loss function without regularisaion terms
         :param initial_position: Initial network weights as a 2-d array of shape [number of chains, number of weights]
+        :param test_model: The model used on the test data. Default=None
         :param batch_size: Batch size used for stochastic sampling methods. Default=None
         :param burn_in: Number of burn-in samples. Default=0
         :param step_sizes: Step size or a list of step sizes. Default=.0001
         :param step_probabilities: Probabilities to choose a step from step_sizes, must sum to 1. Default=1
-
-        Additional parameters:
-        :param initial_prior_params: Initial parameters on for model priors. Default=None
-        :param resample_prior_params: Whether to resample parameters with Gibbs scheme. Default=False
         """
 
         super().__init__(**kwargs)
@@ -74,18 +71,18 @@ class MCMC_sampler(Sampler):
 
     def __repr__(self):
         s = super().__repr__()
-        s += f"Chains num: {self.chains_num}\n"
-        s += f"Batch size: {self.batch_size}\n"
-        s += f"Position size: {self.position_size}\n"
-        s += f"Precisions: noise = {self.noise_precision}, weights = {self.weights_precision}\n"
-        s += f"Resample precision: noise = {self.resample_noise_precision}, "
-        s += f"weights = {self.resample_weights_precision}\n"
-        s += f"Burn in: {self.burn_in}\n"
-        s += f"Seek step sizes: {self.seek_step_sizes}\n"
-        s += f"Anneal step sizes: {self.anneal_step_sizes}\n"
-        s += f"Fade in velocities: {self.fade_in_velocities}\n"
-        s += "Step sizes: {}\n".format(np.array_str(self.step_sizes).replace('\n', ''))
-        s += "Step probabilities: {}\n".format(np.array_str(self.step_probabilities).replace('\n', ''))
+        s += f'Chains num: {self.chains_num}\n'
+        s += f'Batch size: {self.batch_size}\n'
+        s += f'Position size: {self.position_size}\n'
+        s += f'Precisions: noise = {self.noise_precision}, weights = {self.weights_precision}\n'
+        s += f'Resample precision: noise = {self.resample_noise_precision}, '
+        s += f'weights = {self.resample_weights_precision}\n'
+        s += f'Burn in: {self.burn_in}\n'
+        s += f'Seek step sizes: {self.seek_step_sizes}\n'
+        s += f'Anneal step sizes: {self.anneal_step_sizes}\n'
+        s += f'Fade in velocities: {self.fade_in_velocities}\n'
+        s += 'Step sizes: {}\n'.format(np.array_str(self.step_sizes).replace('\n', ''))
+        s += 'Step probabilities: {}\n'.format(np.array_str(self.step_probabilities).replace('\n', ''))
         return s
 
     def _construct(self, **kwargs):
@@ -226,7 +223,7 @@ class MCMC_sampler(Sampler):
         weight_deviation = self._updated_position_value.max() - self._updated_position_value.min()
 
         if not (weight_deviation < 10 ** 9):
-            logging.info(f"Sample discarded to prevent instability: {weight_deviation:.2f}")
+            logging.info(f'Sample discarded to prevent instability: {weight_deviation:.2f}')
             return None
 
         # accept new position
@@ -245,7 +242,7 @@ class MCMC_sampler(Sampler):
 
         if not self._has_burned_in and self._burned_in():
             self._has_burned_in = True
-            logging.info(f"Burned in. Samples = {self.sample_number}, step size = {self._current_step_size_value}.")
+            logging.info(f'Burned in. Samples = {self.sample_number}, step size = {self._current_step_size_value}.')
 
         return self._position_value
 

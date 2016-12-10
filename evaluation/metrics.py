@@ -116,14 +116,14 @@ def f1(p_samples, q_samples, alpha=.90):
 
 
 METRICS_INDEX = {
-    "KS": ks_distance,
-    "KL": kl_divergence,
-    "IoU": iou,
-    "P": precision,
-    "Precision": precision,
-    "R": recall,
-    "Recall": recall,
-    "F1": f1,
+    'KS': ks_distance,
+    'KL': kl_divergence,
+    'IoU': iou,
+    'P': precision,
+    'Precision': precision,
+    'R': recall,
+    'Recall': recall,
+    'F1': f1,
 }
 
 

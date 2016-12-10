@@ -71,12 +71,12 @@ class Sampler:
         self._pc = None  # performance counter
 
     def __repr__(self):
-        s = f"Sampler: {self.sampler_type}\n"
-        s += f"Train size: {self.train_size}\n"
-        s += f"Test size: {self.test_size}\n"
-        s += f"Normalise: {self.normalise_data}\n"
-        s += f"X: mean={self.train_x_mean}, std={self.train_x_std}\n"
-        s += f"Y: mean={self.train_y_mean}, std={self.train_y_std}\n"
+        s = f'Sampler: {self.sampler_type}\n'
+        s += f'Train size: {self.train_size}\n'
+        s += f'Test size: {self.test_size}\n'
+        s += f'Normalise: {self.normalise_data}\n'
+        s += f'X: mean={self.train_x_mean}, std={self.train_x_std}\n'
+        s += f'Y: mean={self.train_y_mean}, std={self.train_y_std}\n'
         return s
 
     def _normalise_data(self):
@@ -117,9 +117,9 @@ class Sampler:
         """ Constructs computation graph for the model. """
         pass
 
-    # Override in subclasses that fit the model prior to sampling
+    # Override in subclasses that fit the model before sampling
     def _fit(self, **kwargs):
-        """ Fits the model prior to sampling. """
+        """ Fits the model before sampling. """
         pass
 
     # Override in subclasses supporting draws from the posterior
@@ -134,9 +134,9 @@ class Sampler:
 
     def construct(self, **kwargs):
         """ Constructs computation graph for the model. """
-        logging.info("Constructing computation graph...")
+        logging.info('Constructing computation graph...')
         self._construct(**kwargs)
-        logging.info("{!r}".format(self))
+        logging.info('{!r}'.format(self))
 
     def fit(self, **kwargs):
         """ Fits the model prior to drawing samples. """
@@ -161,7 +161,7 @@ class Sampler:
         if sample is not None:
             self.sample_number += 1
         else:
-            logging.warning("Impossible to draw a sample with the specified parameters.")
+            logging.warning('Impossible to draw a sample with the specified parameters.')
 
         if return_stats:
             return sample, stats
@@ -191,7 +191,7 @@ class Sampler:
             # denormalise
             sample = [self._denormalise_sample(s) for s in sample]
         else:
-            logging.warning("Impossible to draw a sample with the specified parameters.")
+            logging.warning('Impossible to draw a sample with the specified parameters.')
 
         if return_stats:
             return sample, stats

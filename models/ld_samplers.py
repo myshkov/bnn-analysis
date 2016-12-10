@@ -1,5 +1,6 @@
 """
-This module implements LD based samplers for NNs.
+This module implements Langevin Dynamics (LD) -based samplers for NNs.
+Radford M Neal. “Bayesian Learning for Neural Networks”. In: PhD thesis, University of Toronto. 1995.
 """
 
 import numpy as np
@@ -18,7 +19,7 @@ class LDSampler(MCMC_sampler):
         kwargs['seek_step_sizes'] = False
 
         super().__init__(**kwargs)
-        self.sampler_type = "LD"
+        self.sampler_type = 'LD'
 
     def _construct_transition_step(self):
         """ Constructs LD general transition step. """
@@ -61,12 +62,13 @@ class LDSampler(MCMC_sampler):
 class SGLDSampler(LDSampler):
     """
     Stochastic Gradient Langevin Dynamics (SGLD) sampler for NNs.
+    http://people.ee.duke.edu/~lcarin/398_icmlpaper.pdf
     """
 
     def __init__(self, **kwargs):
         """ Creates a new SGLDSampler object. """
         super().__init__(**kwargs)
-        self.sampler_type = "SGLD"
+        self.sampler_type = 'SGLD'
 
         # effectively LD since the likelihood part of the target function is already adjusted for the batch size
 
@@ -74,11 +76,12 @@ class SGLDSampler(LDSampler):
 class pSGLDSampler(LDSampler):
     """
     Preconditioned Stochastic Gradient Langevin Dynamics (pSGLD) sampler for NNs.
+    https://arxiv.org/abs/1512.07666
     """
 
     def __init__(self, preconditioned_alpha=0.99, preconditioned_lambda=1e-05, adjust_steps=False, **kwargs):
         super().__init__(**kwargs)
-        self.sampler_type = "pSGLD"
+        self.sampler_type = 'pSGLD'
 
         self.preconditioned_alpha = preconditioned_alpha
         self.preconditioned_lambda = preconditioned_lambda
@@ -86,8 +89,8 @@ class pSGLDSampler(LDSampler):
 
     def __repr__(self):
         s = super().__repr__()
-        s += f"Preconditioned alpha: {self.preconditioned_alpha}\n"
-        s += f"Preconditioned lambda: {self.preconditioned_lambda}\n"
+        s += f'Preconditioned alpha: {self.preconditioned_alpha}\n'
+        s += f'Preconditioned lambda: {self.preconditioned_lambda}\n'
         return s
 
     def _create_feeds(self):
